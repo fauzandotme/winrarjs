@@ -21,5 +21,8 @@
   "bugs": {
     "url": "https://github.com/fauzandotme/rarjs/issues"
   },
-  "homepage": "https://github.com/fauzandotme/rarjs#readme"
+  "homepage": "https://github.com/fauzandotme/rarjs#readme",
+  "dependencies": {
+    "file-exists": "^3.0.2"
+  }
 }

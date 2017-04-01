@@ -113,8 +113,8 @@ function parseList(res) {
   let output = [];
   res.forEach((item, index) => {
     item = item.trim();
-    item = item.split('  ');
-    output.push({size: item[1], date: item[2], path: item[3], fileName: path.basename(item[3])});
+    item = item.replace(/\s\s+/g, ' ').split(' ');
+    output.push({size: item[1], date: item[2] + ' ' + item[3], path: item[4], fileName: path.basename(item[4])});
   })
   return output;
 }
