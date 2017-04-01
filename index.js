@@ -15,7 +15,7 @@ const File = function (filePath = false) {
   }
 }
 
-File.prototype.setFile = function (filePath = false) {
+File.prototype.addFile = function (filePath = false) {
   if(typeof filePath == 'object') {
     this.file = this.file.concat(filePath);
   } else {
@@ -99,19 +99,6 @@ File.prototype.listFile = function () {
   })
 }
 
-// // let file = new File('/home/fauzan/Documents/idleechjs/modules/utils/test.mp4');
-// let file = new File('/home/fauzan/Documents/idleechjs/modules/utils/test2.rar');
-// // file.setOutput('/home/fauzan/Documents/idleechjs/modules/utils/test.rar');
-// file.setOutput('/home/fauzan/Documents/idleechjs/modules/utils/');
-// // file.setConfig({password: 'fauzan', volumes: 10, level: 3 });
-// file.setArchiveFile(['test/home/fauzan/Videos/batchUpload.mp4', 'test/home/fauzan/Videos/batchUpload2.mp4']);
-// file.setConfig({password: 'fauzan'});
-// file.unrar().then((res) => {
-//   console.log(res);
-// }).catch((err) => {
-//   console.log(err);
-// })
-
 function checkField(arr) {
   let output = true;
   arr.forEach((item) => {
@@ -131,3 +118,5 @@ function parseList(res) {
   })
   return output;
 }
+
+module.exports = File;
