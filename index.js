@@ -79,7 +79,7 @@ File.prototype.unrar = function() {
     command += `${this.output} `;
     exec(command,{maxBuffer: 1024 * 5000}, (err, res) => {
       if(err) reject(err);
-      resolve(res);
+      resolve(parseUnrar(res));
     })
   })
 }
@@ -115,6 +115,16 @@ function parseList(res) {
     item = item.trim();
     item = item.replace(/\s\s+/g, ' ').split(' ');
     output.push({size: item[1], date: item[2] + ' ' + item[3], path: item[4], fileName: path.basename(item[4])});
+  })
+  return output;
+}
+
+function parseUnrar(res) {
+  res = res.match(/Extracting +.+OK/);
+  let output = [];
+  res.forEach((item) => {
+    let filePath = item.replace('Extracting', '').replace(/\s\s\s+.+/g, '').trim();
+    output.push({fileName: path.basename(filePath), filePath});
   })
   return output;
 }
