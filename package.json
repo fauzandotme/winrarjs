@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/fauzandotme/rarjs#readme",
   "dependencies": {
-    "file-exists": "^3.0.2"
+    "file-exists": "^3.0.2",
+    "mime": "^1.3.4"
   }
 }

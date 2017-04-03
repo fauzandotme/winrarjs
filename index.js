@@ -2,6 +2,7 @@ const exec = require('child_process').exec;
 const fs = require('fs');
 const path = require('path');
 const fileExists = require('file-exists');
+const mime = require('mime');
 
 const File = function (filePath = false) {
   this.file = [];
@@ -68,6 +69,7 @@ File.prototype.rar = function() {
 
 File.prototype.unrar = function() {
   return new Promise((resolve, reject) => {
+    if(mime.lookup(this.file) != 'application/x-rar-compressed') reject({message: `Please select rar file`});
     if(!checkField([this.output, this.file])) reject(`Input and Output file are required!`)
     let command = `${__dirname}/unrar e -o+ `;
     if(this.password) command += `-p${this.password} `;
@@ -86,6 +88,7 @@ File.prototype.unrar = function() {
 
 File.prototype.listFile = function () {
   return new Promise((resolve, reject) => {
+    if(mime.lookup(this.file) != 'application/x-rar-compressed') reject({message: `Please select rar file`});
     let command = `${__dirname}/unrar l `;
     if(this.password) command += `-p${this.password} `;
     this.file.forEach((file) => {
