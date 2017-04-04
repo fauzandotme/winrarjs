@@ -69,7 +69,7 @@ File.prototype.rar = function() {
 
 File.prototype.unrar = function() {
   return new Promise((resolve, reject) => {
-    if(mime.lookup(this.file) != 'application/x-rar-compressed') reject({message: `Please select rar file`});
+    if(mime.lookup(this.file[0]) != 'application/x-rar-compressed') reject({message: `Please select rar file`});
     if(!checkField([this.output, this.file])) reject(`Input and Output file are required!`)
     let command = `${__dirname}/unrar e -o+ `;
     if(this.password) command += `-p${this.password} `;
@@ -88,11 +88,11 @@ File.prototype.unrar = function() {
 
 File.prototype.listFile = function () {
   return new Promise((resolve, reject) => {
-    if(mime.lookup(this.file) != 'application/x-rar-compressed') reject({message: `Please select rar file`});
     let command = `${__dirname}/unrar l `;
     if(this.password) command += `-p${this.password} `;
     this.file.forEach((file) => {
-      if(!fileExists.sync(file)) reject(`file didn't exist: ${file}`);
+      if(mime.lookup(file) != 'application/x-rar-compressed') {reject({message: `Please select rar file`}); throw 'err'}
+      if(!fileExists.sync(file)) {reject(`file didn't exist: ${file}`); throw 'err'}
       command += `${file} `;
     })
     exec(command,{maxBuffer: 1024 * 5000}, (err, res) => {
@@ -123,7 +123,7 @@ function parseList(res) {
 }
 
 function parseUnrar(res) {
-  res = res.match(/Extracting +.+OK/);
+  res = res.match(/Extracting +.+OK/g);
   let output = [];
   res.forEach((item) => {
     let filePath = item.replace('Extracting', '').replace(/\s\s\s+.+/g, '').trim();
