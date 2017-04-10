@@ -154,7 +154,12 @@ function parseList(res) {
   res.forEach((item, index) => {
     item = item.trim();
     item = item.replace(/\s\s+/g, ' ').split(' ');
-    output.push({size: item[1], date: item[2] + ' ' + item[3], path: item[4], fileName: path.basename(item[4])});
+    let files = {size: item[1], date: item[2] + ' ' + item[3]};
+    item.splice(0, 4);
+    item = item.join(' ');
+    files.path = item;
+    files.fileName = path.basename(item);
+    output.push(files);
   })
   return output;
 }
