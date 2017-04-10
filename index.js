@@ -49,7 +49,7 @@ File.prototype.setConfig = function (opt) {
 File.prototype.rar = function() {
   return new Promise((resolve, reject) => {
     if(!checkField([this.output, this.file])) reject(`Input and Output file are required!`)
-    let command = `${__dirname}/rar a -ep `;
+    let command = `${__dirname}/rar a -ep -o+ `;
     if(this.password) command += `-p${this.password} `;
     if(this.volumes) command += `-v${this.volumes*1024} `;
     if(this.deleteAfter) command += `-df `;
@@ -62,7 +62,7 @@ File.prototype.rar = function() {
     })
     exec(command,{maxBuffer: 1024 * 5000}, (err, res) => {
       if(err) reject(err);
-      resolve(res);
+      resolve(parseRar(res));
     })
   })
 }
@@ -72,16 +72,17 @@ File.prototype.unrar = function() {
     if(mime.lookup(this.file[0]) != 'application/x-rar-compressed') reject({message: `Please select rar file`});
     if(!checkField([this.output, this.file])) reject(`Input and Output file are required!`)
     let command = `${__dirname}/unrar e -o+ `;
-    if(this.password) command += `-p${this.password} `;
+    if(this.password) {command += `-p${this.password} `;} else {command += `-p- `};
     if(this.deleteAfter) command += `-df `;
     command += `${this.file[0]} `;
     this.archiveFile.forEach((file) => {
       command += `${file} `;
     })
     command += `${this.output} `;
+    console.log(command);
     exec(command,{maxBuffer: 1024 * 5000}, (err, res) => {
-      if(err) reject(err);
-      resolve(parseUnrar(res));
+      if(err) reject(parseUnrarError(err));
+      else resolve(parseUnrar(res));
     })
   })
 }
@@ -100,6 +101,42 @@ File.prototype.listFile = function () {
       resolve(parseList(res));
     })
   })
+}
+
+File.prototype.zip = function () {
+  return new Promise((resolve, reject) => {
+    if(fileExists.sync(this.output)) fs.unlinkSync(this.output);
+    let command = `zip -q -j ${this.output} `;
+    this.file.forEach((file) => {
+      command += `${file} `;
+    })
+    exec(command,{maxBuffer: 1024 * 5000}, (err, res) => {
+      if(err) reject(err);
+      resolve({fileName: path.basename(this.output), filePath: this.output});
+    })
+  })
+}
+
+File.prototype.unzip = function () {
+  return new Promise((resolve, reject) => {
+    let command = `unzip -j -o -U ${this.file[0]} -d ${this.output}`;
+    exec(command,{maxBuffer: 1024 * 5000}, (err, res) => {
+      if(err) reject(err);
+      resolve(parseUnzip(res));
+    })
+  })
+}
+
+function parseUnzip(res) {
+  res = res.split('\n');
+  res.splice(0, 1);
+  res.splice(res.length -1, 1);
+  let output = [];
+  res.forEach((item) => {
+    item = item.trim().replace('inflating: ', '');
+    output.push({fileName: path.basename(item), filePath: item});
+  })
+  return output;
 }
 
 function checkField(arr) {
@@ -130,6 +167,29 @@ function parseUnrar(res) {
     output.push({fileName: path.basename(filePath), filePath});
   })
   return output;
+
 }
 
+function parseUnrarError(res) {
+  let error = {};
+  if(/Corrupt file or wrong password/gi.test(res.message)) {
+    error.code = 1;
+    error.message = 'Corrupt file or wrong password';
+  } else {
+    error.code = 0;
+    error.message = 'Unknown error';
+  }
+  return error;
+}
+
+function parseRar(res) {
+  console.log(res);
+  res = res.match(/Creating archive+.+/gi);
+  let output = [];
+  res.forEach((item) => {
+    filePath = item.replace('Creating archive ', '').trim();
+    output.push({fileName: path.basename(filePath), filePath});
+  })
+  return output;
+}
 module.exports = File;
