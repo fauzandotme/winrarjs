@@ -48,7 +48,7 @@ File.prototype.setConfig = function (opt) {
 
 File.prototype.rar = function() {
   return new Promise((resolve, reject) => {
-    if(!checkField([this.output, this.file])) reject(`Input and Output file are required!`)
+    if(!checkField([this.output, this.file])) reject({message: `Input and Output file are required!`})
     let command = `${__dirname}/rar a -ep -o+ `;
     if(this.password) command += `-p${this.password} `;
     if(this.volumes) command += `-v${this.volumes*1024} `;
@@ -57,7 +57,7 @@ File.prototype.rar = function() {
     if(fileExists.sync(this.output)) fs.unlinkSync(this.output);
     command += `${this.output} `;
     this.file.forEach((file) => {
-      if(!fileExists.sync(file)) reject(`file didn't exist: ${file}`);
+      if(!fileExists.sync(file)) reject({message: `file didn't exist: ${file}`});
       command += `'${file}' `;
     })
     exec(command,{maxBuffer: 1024 * 5000}, (err, res) => {
@@ -70,7 +70,7 @@ File.prototype.rar = function() {
 File.prototype.unrar = function() {
   return new Promise((resolve, reject) => {
     if(mime.lookup(this.file[0]) != 'application/x-rar-compressed') reject({message: `Please select rar file`});
-    if(!checkField([this.output, this.file])) reject(`Input and Output file are required!`)
+    if(!checkField([this.output, this.file])) reject({message: `Input and Output file are required!`})
     let command = `${__dirname}/unrar e -o+ `;
     if(this.password) {command += `-p${this.password} `;} else {command += `-p- `};
     if(this.deleteAfter) command += `-df `;
