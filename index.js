@@ -150,16 +150,33 @@ function parseList(res) {
   res = res.split('----------- ---------  ---------- -----  ----')[1].trim();
   res = res.split('\n');
   let output = [];
+  let password = false;
   res.forEach((item, index) => {
     item = item.trim();
     item = item.replace(/\s\s+/g, ' ').split(' ');
-    let files = {size: item[1], date: item[2] + ' ' + item[3]};
-    item.splice(0, 4);
+    let ind = 0;
+    try {
+      item.forEach((tes, index) => {
+        if(index == 0) {
+          if(/\*/g.test(tes)) password = true;
+        }
+        if(parseInt(tes) > 0) {
+          ind = index;
+          throw 'stop';
+        }
+      })
+    } catch (e) {
+
+    }
+    item.splice(0, ind);
+    let files = {size: item[0], date: item[1] + ' ' + item[2]};
+    item.splice(0, 3);
     item = item.join(' ');
     files.path = item;
     files.fileName = path.basename(item);
     output.push(files);
   })
+  output['password'] = password;
   return output;
 }
 
