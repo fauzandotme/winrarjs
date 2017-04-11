@@ -79,7 +79,6 @@ File.prototype.unrar = function() {
       command += `'${file}' `;
     })
     command += `${this.output} `;
-    console.log(command);
     exec(command,{maxBuffer: 1024 * 5000}, (err, res) => {
       if(err) reject(parseUnrarError(err));
       else resolve(parseUnrar(res));
@@ -165,10 +164,13 @@ function parseList(res) {
 }
 
 function parseUnrar(res) {
-  res = res.match(/Extracting +.+OK/g);
+  // console.log(res);
+  res2 = res.match(/Extracting +.+OK/g);
+  if(!res2) res2 = res.match(/\.\.\.+.+OK/g);
   let output = [];
-  res.forEach((item) => {
+  res2.forEach((item) => {
     let filePath = item.replace('Extracting', '').replace(/\s\s\s+.+/g, '').trim();
+    if(filePath == '...') filePath = item.replace(/\.\.\.\s\s+|\s\s+.+/g, '')
     output.push({fileName: path.basename(filePath), filePath});
   })
   return output;
@@ -188,13 +190,25 @@ function parseUnrarError(res) {
 }
 
 function parseRar(res) {
-  console.log(res);
   res = res.match(/Creating archive+.+/gi);
   let output = [];
-  res.forEach((item) => {
-    filePath = item.replace('Creating archive ', '').trim();
-    output.push({fileName: path.basename(filePath), filePath});
+  res.forEach((item, index) => {
+    try {
+      filePath = item.replace('Creating archive ', '').trim();
+      if(res.length > 1 && index == 0) filePath = filePath.replace('.rar', `.part${pad(1, res.length.toString().length)}.rar`);
+      output.push({fileName: path.basename(filePath), filePath});
+    } catch (e) {
+      console.log(e);
+      throw e.message;
+    }
   })
   return output;
 }
+
+function pad(n, width, z) {
+  z = z || '0';
+  n = n + '';
+  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+}
+
 module.exports = File;
