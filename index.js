@@ -3,6 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const fileExists = require('file-exists');
 const mime = require('mime');
+const shellescape = require('shell-escape');
+
 
 const File = function (filePath = false) {
   this.file = [];
@@ -49,17 +51,18 @@ File.prototype.setConfig = function (opt) {
 File.prototype.rar = function() {
   return new Promise((resolve, reject) => {
     if(!checkField([this.output, this.file])) reject({message: `Input and Output file are required!`})
-    let command = `${__dirname}/rar a -ep -o+ `;
-    if(this.password) command += `-p${this.password} `;
-    if(this.volumes) command += `-v${this.volumes*1024} `;
-    if(this.deleteAfter) command += `-df `;
+    let command = [`${__dirname}/rar`,`a`,`-ep`,`-o+`];
+    if(this.password) command.push(`-p${this.password}`);
+    if(this.volumes) command.push(`-v${this.volumes*1024}`);
+    if(this.deleteAfter) command.push(`-df`);
     if(this.level) command += `-m${this.level} `;
     if(fileExists.sync(this.output)) fs.unlinkSync(this.output);
-    command += `${this.output} `;
+    command.push(`${this.output}`);
     this.file.forEach((file) => {
       if(!fileExists.sync(file)) reject({message: `file didn't exist: ${file}`});
-      command += `'${file}' `;
+      command.push(file);
     })
+    command = shellescape(command);
     exec(command,{maxBuffer: 1024 * 5000}, (err, res) => {
       if(err) reject(err);
       resolve(parseRar(res));
@@ -71,14 +74,15 @@ File.prototype.unrar = function() {
   return new Promise((resolve, reject) => {
     if(mime.lookup(this.file[0]) != 'application/x-rar-compressed') reject({message: `Please select rar file`});
     if(!checkField([this.output, this.file])) reject({message: `Input and Output file are required!`})
-    let command = `${__dirname}/unrar e -o+ `;
-    if(this.password) {command += `-p${this.password} `;} else {command += `-p- `};
-    if(this.deleteAfter) command += `-df `;
-    command += `${this.file[0]} `;
+    let command = [`${__dirname}/unrar`, 'e', '-o+'];
+    if(this.password) {command.push(`-p${this.password}`);} else {command.push(`-p-`)};
+    if(this.deleteAfter) command.push('-df');
+    command.push(this.file[0]);
     this.archiveFile.forEach((file) => {
-      command += `'${file}' `;
+      command.push(file);
     })
-    command += `${this.output} `;
+    command.push(this.output);
+    command = shellescape(command);
     exec(command,{maxBuffer: 1024 * 5000}, (err, res) => {
       if(err) reject(parseUnrarError(err));
       else resolve(parseUnrar(res));
@@ -88,13 +92,16 @@ File.prototype.unrar = function() {
 
 File.prototype.listFile = function () {
   return new Promise((resolve, reject) => {
-    let command = `${__dirname}/unrar l `;
-    if(this.password) command += `-p${this.password} `;
+    let command = [];
+    command.push(`${__dirname}/unrar`);
+    command.push('l');
+    if(this.password) command.push(`-p${this.password}`);
     this.file.forEach((file) => {
       if(mime.lookup(file) != 'application/x-rar-compressed') {reject({message: `Please select rar file`}); throw 'err'}
       if(!fileExists.sync(file)) {reject(`file didn't exist: ${file}`); throw 'err'}
-      command += `'${file}' `;
+      command.push(`${file}`);
     })
+    command = shellescape(command);
     exec(command,{maxBuffer: 1024 * 5000}, (err, res) => {
       if(err) reject(err);
       resolve(parseList(res));
@@ -105,10 +112,12 @@ File.prototype.listFile = function () {
 File.prototype.zip = function () {
   return new Promise((resolve, reject) => {
     if(fileExists.sync(this.output)) fs.unlinkSync(this.output);
-    let command = `zip -q -j ${this.output} `;
+    let command = [];
+    Array.prototype.push.apply(command, ['zip', '-q', '-j', `${this.output}`]);
     this.file.forEach((file) => {
-      command += `'${file}' `;
+      command.push(file);
     })
+    command = shellescape(command);
     exec(command,{maxBuffer: 1024 * 5000}, (err, res) => {
       if(err) reject(err);
       resolve({fileName: path.basename(this.output), filePath: this.output});
@@ -118,7 +127,9 @@ File.prototype.zip = function () {
 
 File.prototype.unzip = function () {
   return new Promise((resolve, reject) => {
-    let command = `unzip -j -o -U '${this.file[0]}' -d ${this.output}`;
+    let command = [];
+    Array.prototype.push.apply(command, ['unzip', '-j', '-o', '-U', `${this.file[0]}`, '-d', `${this.output}`]);
+    command = shellescape(command);
     exec(command,{maxBuffer: 1024 * 5000}, (err, res) => {
       if(err) reject(err);
       resolve(parseUnzip(res));
@@ -181,7 +192,6 @@ function parseList(res) {
 }
 
 function parseUnrar(res) {
-  // console.log(res);
   res2 = res.match(/Extracting +.+OK/g);
   if(!res2) res2 = res.match(/\.\.\.+.+OK/g);
   let output = [];
