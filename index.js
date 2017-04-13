@@ -55,7 +55,7 @@ File.prototype.rar = function() {
     if(this.password) command.push(`-p${this.password}`);
     if(this.volumes) command.push(`-v${this.volumes*1024}`);
     if(this.deleteAfter) command.push(`-df`);
-    if(this.level) command += `-m${this.level} `;
+    if(this.level) command.push[`-m${this.level}`];
     if(fileExists.sync(this.output)) fs.unlinkSync(this.output);
     command.push(`${this.output}`);
     this.file.forEach((file) => {
