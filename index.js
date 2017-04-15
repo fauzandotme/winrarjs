@@ -193,11 +193,10 @@ function parseList(res) {
 
 function parseUnrar(res) {
   res2 = res.match(/Extracting +.+OK/g);
-  if(!res2) res2 = res.match(/\.\.\.+.+OK/g);
+  if(!res2) res2 = res.match(/Extracting+.+\/+.+\%/g);
   let output = [];
   res2.forEach((item) => {
     let filePath = item.replace('Extracting', '').replace(/\s\s\s+.+/g, '').trim();
-    if(filePath == '...') filePath = item.replace(/\.\.\.\s\s+|\s\s+.+/g, '')
     output.push({fileName: path.basename(filePath), filePath});
   })
   return output;
