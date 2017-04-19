@@ -210,6 +210,7 @@ function parseUnrarError(res) {
     error.message = 'Corrupt file or wrong password';
   } else {
     error.code = 0;
+    console.log(res);
     error.message = 'Unknown error';
   }
   return error;
